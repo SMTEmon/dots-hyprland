@@ -33,6 +33,19 @@ prepare() {
   git submodule init
   git config submodule.subprojects/gvc.url "$srcdir/libgnome-volume-control"
   git -c protocol.file.allow=always submodule update
+
+  # Fix for GNOME 48: GIRepository API bumped from 2.0 to 3.0
+  find . -type f \( -name "*.ts" -o -name "*.js" \) -exec \
+    sed -i \
+      -e "s/gi\.require('GIRepository', '2\.0')/gi.require('GIRepository', '3.0')/g" \
+      -e "s/GIRepository?version=2\.0/GIRepository?version=3.0/g" \
+      -e "s/\(GIRepository\.Repository\)\.get_default()/\1.dup_default()/g" \
+    {} +
+
+  # Fix TypeScript type mismatch: SharedArrayBuffer -> ArrayBuffer in greetd.ts
+  if [ -f src/service/greetd.ts ]; then
+    sed -i 's/SharedArrayBuffer/ArrayBuffer/g' src/service/greetd.ts
+  fi
 }
 
 build() {
